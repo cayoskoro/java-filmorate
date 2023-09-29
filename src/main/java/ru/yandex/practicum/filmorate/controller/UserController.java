@@ -1,79 +1,61 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import javax.validation.Valid;
+import java.util.*;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final Set<User> users = new HashSet<>();
+    private final Map<Integer, User> users = new HashMap<>();
     private Integer idCounter = 0;
 
     @PostMapping
-    public User create(@RequestBody User user) {
+    public User create(@Valid @RequestBody User user) {
         try {
-            if (!isValidUser(user)) {
-                throw new ValidationException();
-            }
-
             if (Objects.isNull(user.getName()) || user.getName().isBlank()) {
                 user.setName(user.getLogin());
             }
 
-            generateId();
-            user.setId(getIdCounter());
-            users.add(user);
+            user.setId(generateId());
+            users.put(user.getId(), user);
             return user;
         } catch (ValidationException e) {
-            return null;
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Provide correct User fields", e);
         }
     }
 
     @PutMapping
-    public User update(@RequestBody User user) {
+    public User update(@Valid @RequestBody User user) {
         try {
-            if (!isValidUser(user)) {
+            if (Objects.isNull(users.get(user.getId()))) {
                 throw new ValidationException();
-            }
-
-            if (!users.contains(user)) {
-                return null;
             }
 
             if (Objects.isNull(user.getName()) || user.getName().isBlank()) {
                 user.setName(user.getLogin());
             }
-            users.add(user);
+
+            users.put(user.getId(), user);
             return user;
         } catch (ValidationException e) {
-            return null;
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "User Not Found", e);
         }
     }
 
     @GetMapping
-    public Set<User> findAll() {
-        return users;
-    }
-
-    private boolean isValidUser(User user) {
-        return !Objects.isNull(user.getEmail()) && !Objects.isNull(user.getLogin())
-                && !user.getEmail().isBlank() && user.getEmail().contains("@")
-                && !user.getLogin().isBlank() && !user.getLogin().contains(" ")
-                && !user.getBirthday().isAfter(LocalDate.now());
+    public List<User> findAll() {
+        return new ArrayList<>(users.values());
     }
 
     private Integer generateId() {
         return ++idCounter;
-    }
-
-    private Integer getIdCounter() {
-        return idCounter;
     }
 }

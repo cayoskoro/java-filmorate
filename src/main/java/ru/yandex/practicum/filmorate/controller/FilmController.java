@@ -1,14 +1,13 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import javax.validation.Valid;
+import java.util.*;
 
 @RestController
 @RequestMapping("/films")
@@ -17,57 +16,38 @@ public class FilmController {
     private Integer idCounter = 0;
 
     @PostMapping
-    public Film create(@RequestBody Film film) {
+    public Film create(@Valid  @RequestBody Film film) {
         try {
-            if (!isValidFilm(film)) {
-                throw new ValidationException();
-            }
-            generateId();
-            film.setId(getIdCounter());
-            films.put(getIdCounter(), film);
+            film.setId(generateId());
+            films.put(film.getId(), film);
             return film;
         } catch (ValidationException e) {
-            return null;
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Provide correct User fields", e);
         }
     }
 
     @PutMapping
-    public Film update(@RequestBody Film film) {
+    public Film update(@Valid @RequestBody Film film) {
         try {
-            if (!isValidFilm(film)) {
-                throw new ValidationException();
-            }
-
             if (Objects.isNull(films.get(film.getId()))) {
-                return null;
+                throw new ValidationException();
             }
 
             films.put(film.getId(), film);
             return film;
         } catch (ValidationException e) {
-            return null;
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Film Not Found", e);
         }
     }
 
     @GetMapping
-    public Map<Integer, Film> findAll() {
-        return films;
-    }
-
-    private boolean isValidFilm(Film film) {
-        return !Objects.isNull(film.getName()) && !Objects.isNull(film.getDuration())
-                && !film.getName().isBlank()
-                && film.getDescription().length() <= 200
-                && !film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))
-                && film.getDuration() > 0;
+    public List<Film> findAll() {
+        return new ArrayList<>(films.values());
     }
 
     private Integer generateId() {
         return ++idCounter;
     }
-
-    private Integer getIdCounter() {
-        return idCounter;
-    }
-
 }
