@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.Value;
 import ru.yandex.practicum.filmorate.annotation.EqualOrAfterSystemReleaseDate;
 
 import javax.validation.constraints.NotBlank;
@@ -8,15 +9,16 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
-@Data
+@Value
+@Builder(toBuilder = true)
 public class Film {
-    private Integer id;
+    Integer id;
     @NotBlank
-    private String name;
+    String name;
     @Size(max = 200)
-    private String description;
+    String description;
     @EqualOrAfterSystemReleaseDate
-    private LocalDate releaseDate;
+    LocalDate releaseDate;
     @Positive
-    private Integer duration;
+    Integer duration;
 }
