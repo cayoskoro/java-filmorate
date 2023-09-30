@@ -7,7 +7,8 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 
-public class EqualOrAfterSystemReleaseDateValidator implements ConstraintValidator<EqualOrAfterSystemReleaseDate, LocalDate> {
+public class EqualOrAfterSystemReleaseDateValidator implements ConstraintValidator<EqualOrAfterSystemReleaseDate,
+        LocalDate> {
 
     @Override
     public boolean isValid(LocalDate localDate, ConstraintValidatorContext constraintValidatorContext) {
