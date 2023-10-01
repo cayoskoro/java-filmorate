@@ -12,16 +12,16 @@ import java.time.LocalDate;
 @Value
 @Builder(toBuilder = true)
 public class User {
-    Integer id;
+    private Integer id;
     @NotBlank
     @Email
-    String email;
+    private String email;
     @NotBlank
     @Pattern(regexp = "^\\S*$")
-    String login;
-    String name;
+    private String login;
+    private String name;
     @PastOrPresent
-    LocalDate birthday;
+    private LocalDate birthday;
 
     public User(Integer id, String email, String login, String name, LocalDate birthday) {
         this.id = id;

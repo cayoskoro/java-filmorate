@@ -18,9 +18,7 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is null");
-        }
+        checkPresentOrThrow(user);
         if (!isValidUser(user)) {
             throw new ValidationException();
         }
@@ -34,9 +32,7 @@ public class UserController {
 
     @PutMapping
     public User update(@Valid @RequestBody User user) {
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is null");
-        }
+        checkPresentOrThrow(user);
         if (!isValidUser(user)) {
             throw new ValidationException();
         }
@@ -62,5 +58,11 @@ public class UserController {
                 && !user.getEmail().isBlank() && user.getEmail().contains("@")
                 && !user.getLogin().isBlank() && !user.getLogin().contains(" ")
                 && !user.getBirthday().isAfter(LocalDate.now());
+    }
+
+    private void checkPresentOrThrow(User user) {
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is null");
+        }
     }
 }

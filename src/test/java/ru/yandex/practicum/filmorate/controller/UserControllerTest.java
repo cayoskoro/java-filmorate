@@ -11,9 +11,9 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
-    UserController userController;
-    User user;
-    User updatedUser;
+    private UserController userController;
+    private User user;
+    private User updatedUser;
 
     @BeforeEach
     void setUp() {

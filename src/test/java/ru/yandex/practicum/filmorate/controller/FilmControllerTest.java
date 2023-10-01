@@ -11,9 +11,13 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FilmControllerTest {
-    FilmController filmController;
-    Film film;
-    Film updatedFilm;
+    private FilmController filmController;
+    private Film film;
+    private Film updatedFilm;
+    private static final String DESCRIPTION_EXAMPLE = "Пятеро друзей ( комик-группа «Шарло»), " +
+            "приезжают в город Бризуль. Здесь они хотят разыскать господина Огюста Куглова, " +
+            "который задолжал им деньги, а именно 20 миллионов. " +
+            "о Куглов, который за время «своего отсутствия», стал кандидатом Коломбани.";
 
     @BeforeEach
     void setUp() {
@@ -68,20 +72,14 @@ class FilmControllerTest {
     @Test
     void testCreateWhenFilmWithDescriptionSizeEqual200() {
         film = filmController.create(film.toBuilder()
-                .description("Пятеро друзей ( комик-группа «Шарло»), приезжают в город Бризуль. " +
-                        "Здесь они хотят разыскать господина Огюста Куглова, " +
-                        "который задолжал им деньги, а именно 20 миллионов. Куглова, который за время была.")
+                .description(DESCRIPTION_EXAMPLE.substring(0, 200))
                 .build());
         assertTrue(filmController.findAll().contains(film), "Создаваемого юнита нет в списке юнитов");
     }
 
     @Test
     void testCreateWhenFilmWithDescriptionSizeMore200() {
-        film = film.toBuilder().description("Пятеро друзей ( комик-группа «Шарло»), приезжают в город Бризуль. " +
-                "Здесь они хотят разыскать господина Огюста Куглова, " +
-                "который задолжал им деньги, а именно 20 миллионов. " +
-                "о Куглов, который за время «своего отсутствия», стал кандидатом Коломбани.")
-                .build();
+        film = film.toBuilder().description(DESCRIPTION_EXAMPLE).build();
         final ValidationException exception = assertThrows(
                 ValidationException.class,
                 () -> filmController.create(film)
@@ -191,9 +189,7 @@ class FilmControllerTest {
     void testUpdateWhenFilmWithDescriptionSizeEqual200() {
         filmController.create(film);
         film = filmController.create(updatedFilm.toBuilder()
-                .description("Пятеро друзей ( комик-группа «Шарло»), приезжают в город Бризуль. " +
-                        "Здесь они хотят разыскать господина Огюста Куглова, " +
-                        "который задолжал им деньги, а именно 20 миллионов. Куглова, который за время была.")
+                .description(DESCRIPTION_EXAMPLE.substring(0, 200))
                 .build());
         assertTrue(filmController.findAll().contains(film), "Создаваемого юнита нет в списке юнитов");
     }
@@ -201,11 +197,7 @@ class FilmControllerTest {
     @Test
     void testUpdateWhenFilmWithDescriptionSizeMore200() {
         filmController.create(film);
-        film = updatedFilm.toBuilder().description("Пятеро друзей ( комик-группа «Шарло»), приезжают в город Бризуль. " +
-                        "Здесь они хотят разыскать господина Огюста Куглова, " +
-                        "который задолжал им деньги, а именно 20 миллионов. " +
-                        "о Куглов, который за время «своего отсутствия», стал кандидатом Коломбани.")
-                .build();
+        film = updatedFilm.toBuilder().description(DESCRIPTION_EXAMPLE).build();
         final ValidationException exception = assertThrows(
                 ValidationException.class,
                 () -> filmController.create(film)

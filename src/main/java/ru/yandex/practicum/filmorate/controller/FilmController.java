@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
@@ -18,9 +19,7 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        if (film == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Film is null");
-        }
+        checkPresentOrThrow(film);
         if (!isValidFilm(film)) {
             throw new ValidationException();
         }
@@ -34,9 +33,7 @@ public class FilmController {
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        if (film == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Film is null");
-        }
+        checkPresentOrThrow(film);
         if (!isValidFilm(film)) {
             throw new ValidationException();
         }
@@ -64,5 +61,11 @@ public class FilmController {
                 && film.getDescription().length() <= 200
                 && !film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))
                 && film.getDuration() > 0;
+    }
+
+    private void checkPresentOrThrow(Film film) {
+        if (film == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Film is null");
+        }
     }
 }
