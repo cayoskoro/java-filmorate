@@ -1,45 +1,44 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
-    private final Map<Integer, User> users = new HashMap<>();
+    private final Map<Integer, User> users;
     private Integer idCounter = 0;
+
+    @Autowired
+    public InMemoryUserStorage(Map<Integer, User> users) {
+        this.users = users;
+    }
 
     @Override
     public User create(User user) {
-        checkPresentOrThrow(user);
-        if (!isValidUser(user)) {
-            throw new ValidationException();
-        }
-
         User createdUser = user.toBuilder()
                 .id(generateId())
                 .build();
-        users.put(createdUser.getId(), createdUser);
-        return createdUser;
+        return users.put(createdUser.getId(), createdUser);
     }
 
     @Override
     public User update(User user) {
-        checkPresentOrThrow(user);
-        if (!isValidUser(user)) {
-            throw new ValidationException();
-        }
-
         if (Objects.isNull(users.get(user.getId()))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User Not Found");
+            throw new NotFoundException("Film Not Found");
         }
-        users.put(user.getId(), user);
-        return user;
+        return users.put(user.getId(), user);
+    }
+
+    @Override
+    public User delete(User user) {
+        if (Objects.isNull(users.get(user.getId()))) {
+            throw new NotFoundException("User Not Found");
+        }
+        return users.remove(user.getId());
     }
 
     @Override
@@ -47,20 +46,12 @@ public class InMemoryUserStorage implements UserStorage {
         return new ArrayList<>(users.values());
     }
 
+    @Override
+    public User findById(Integer id) {
+        return users.get(id);
+    }
+
     private Integer generateId() {
         return ++idCounter;
-    }
-
-    private boolean isValidUser(User user) {
-        return !Objects.isNull(user.getEmail()) && !Objects.isNull(user.getLogin())
-                && !user.getEmail().isBlank() && user.getEmail().contains("@")
-                && !user.getLogin().isBlank() && !user.getLogin().contains(" ")
-                && !user.getBirthday().isAfter(LocalDate.now());
-    }
-
-    private void checkPresentOrThrow(User user) {
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is null");
-        }
     }
 }

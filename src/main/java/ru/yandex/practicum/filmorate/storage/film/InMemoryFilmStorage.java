@@ -1,46 +1,44 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    private final Map<Integer, Film> films = new HashMap<>();
+    private final Map<Integer, Film> films;
     private Integer idCounter = 0;
+
+    @Autowired
+    public InMemoryFilmStorage(Map<Integer, Film> films) {
+        this.films = films;
+    }
 
     @Override
     public Film create(Film film) {
-        checkPresentOrThrow(film);
-        if (!isValidFilm(film)) {
-            throw new ValidationException();
-        }
-
         Film createdFilm = film.toBuilder()
                 .id(generateId())
                 .build();
-        films.put(createdFilm.getId(), createdFilm);
-        return createdFilm;
+        return films.put(createdFilm.getId(), createdFilm);
     }
 
     @Override
     public Film update(Film film) {
-        checkPresentOrThrow(film);
-        if (!isValidFilm(film)) {
-            throw new ValidationException();
-        }
-
         if (Objects.isNull(films.get(film.getId()))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film Not Found");
+            throw new NotFoundException("Film Not Found");
         }
+        return films.put(film.getId(), film);
+    }
 
-        films.put(film.getId(), film);
-        return film;
+    @Override
+    public Film delete(Film film) {
+        if (Objects.isNull(films.get(film.getId()))) {
+            throw new NotFoundException("Film Not Found");
+        }
+        return films.remove(film.getId());
     }
 
     @Override
@@ -48,21 +46,12 @@ public class InMemoryFilmStorage implements FilmStorage {
         return new ArrayList<>(films.values());
     }
 
+    @Override
+    public Film findById(Integer id) {
+        return films.get(id);
+    }
+
     private Integer generateId() {
         return ++idCounter;
-    }
-
-    private boolean isValidFilm(Film film) {
-        return !Objects.isNull(film.getName()) && !Objects.isNull(film.getDuration())
-                && !film.getName().isBlank()
-                && film.getDescription().length() <= 200
-                && !film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))
-                && film.getDuration() > 0;
-    }
-
-    private void checkPresentOrThrow(Film film) {
-        if (film == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Film is null");
-        }
     }
 }

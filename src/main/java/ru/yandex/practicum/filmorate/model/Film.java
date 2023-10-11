@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import ru.yandex.practicum.filmorate.annotation.EqualOrAfterSystemReleaseDate;
 
 import javax.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 @Data
+@EqualsAndHashCode(of = "id")
 @Builder(toBuilder = true)
 public class Film {
     private final Integer id;
@@ -22,5 +24,5 @@ public class Film {
     private final LocalDate releaseDate;
     @Positive
     private final Integer duration;
-    private final Set<Long> likes;
+    private final Set<Integer> likes;
 }

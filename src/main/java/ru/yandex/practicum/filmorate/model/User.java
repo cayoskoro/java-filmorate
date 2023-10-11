@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 @Data
+@EqualsAndHashCode(of = "id")
 @Builder(toBuilder = true)
 public class User {
     private final Integer id;
@@ -23,9 +25,9 @@ public class User {
     private final String name;
     @PastOrPresent
     private final LocalDate birthday;
-    private final Set<Long> friends;
+    private final Set<Integer> friends;
 
-    public User(Integer id, String email, String login, String name, LocalDate birthday, Set<Long> friends) {
+    public User(Integer id, String email, String login, String name, LocalDate birthday, Set<Integer> friends) {
         this.id = id;
         this.email = email;
         this.login = login;
