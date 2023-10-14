@@ -22,7 +22,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         Film createdFilm = film.toBuilder()
                 .id(generateId())
                 .build();
-        return films.put(createdFilm.getId(), createdFilm);
+        films.put(createdFilm.getId(), createdFilm);
+        return createdFilm;
     }
 
     @Override
@@ -30,7 +31,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         if (Objects.isNull(films.get(film.getId()))) {
             throw new NotFoundException("Film Not Found");
         }
-        return films.put(film.getId(), film);
+        films.put(film.getId(), film);
+        return film;
     }
 
     @Override
@@ -48,6 +50,9 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film findById(Integer id) {
+        if (Objects.isNull(films.get(id))) {
+            throw new NotFoundException("Film Not Found");
+        }
         return films.get(id);
     }
 

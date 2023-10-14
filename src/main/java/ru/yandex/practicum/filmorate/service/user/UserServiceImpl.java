@@ -7,9 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,26 +21,41 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User addFriend(Integer userId, Integer friendId) {
-        User user = userStorage.findById(userId);
-        Set<Integer> updatedFriendSet = user.getFriends();
-        updatedFriendSet.add(friendId);
-
-        User updatedFilm = user.toBuilder()
-                .friends(updatedFriendSet)
+        User friend = userStorage.findById(friendId);
+        Set<Integer> friendFriends = new HashSet<>(friend.getFriends());
+        friendFriends.add(userId);
+        User updatedFriend = friend.toBuilder()
+                .friends(friendFriends)
                 .build();
-        return userStorage.update(updatedFilm);
+        userStorage.update(updatedFriend);
+
+        User user = userStorage.findById(userId);
+        Set<Integer> userFriends = new HashSet<>(user.getFriends());
+        userFriends.add(friendId);
+        User updatedUser = user.toBuilder()
+                .friends(userFriends)
+                .build();
+        userStorage.update(updatedUser);
+        return updatedUser;
     }
 
     @Override
     public User deleteFriend(Integer userId, Integer friendId) {
-        User user = userStorage.findById(userId);
-        Set<Integer> updatedFriendSet = user.getFriends();
-        updatedFriendSet.remove(friendId);
-
-        User updatedFilm = user.toBuilder()
-                .friends(updatedFriendSet)
+        User friend = userStorage.findById(friendId);
+        Set<Integer> friendFriends = new HashSet<>(friend.getFriends());
+        friendFriends.remove(userId);
+        User updatedFriend = friend.toBuilder()
+                .friends(friendFriends)
                 .build();
-        return userStorage.update(updatedFilm);
+        userStorage.update(updatedFriend);
+
+        User user = userStorage.findById(userId);
+        Set<Integer> userFriends = new HashSet<>(user.getFriends());
+        userFriends.remove(friendId);
+        User updatedUser = user.toBuilder()
+                .friends(userFriends)
+                .build();
+        return userStorage.update(updatedUser);
     }
 
     @Override
@@ -54,8 +67,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> findCommonFriends(Integer userId, Integer otherUserId) {
-        Set<Integer> commonFriendIds = userStorage.findById(userId).getFriends();
-        commonFriendIds.addAll(userStorage.findById(otherUserId).getFriends());
+        Set<Integer> commonFriendIds = new HashSet<>(userStorage.findById(userId).getFriends());
+        commonFriendIds.retainAll(userStorage.findById(otherUserId).getFriends());
         return commonFriendIds.stream()
                 .map(userStorage::findById)
                 .collect(Collectors.toList());

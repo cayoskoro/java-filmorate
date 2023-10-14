@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -25,4 +26,14 @@ public class Film {
     @Positive
     private final Integer duration;
     private final Set<Integer> likes;
+
+    public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration,
+                Set<Integer> likes) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        this.likes = likes == null ? new HashSet<>() : likes;
+    }
 }

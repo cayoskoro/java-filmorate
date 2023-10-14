@@ -22,7 +22,8 @@ public class InMemoryUserStorage implements UserStorage {
         User createdUser = user.toBuilder()
                 .id(generateId())
                 .build();
-        return users.put(createdUser.getId(), createdUser);
+        users.put(createdUser.getId(), createdUser);
+        return createdUser;
     }
 
     @Override
@@ -30,7 +31,8 @@ public class InMemoryUserStorage implements UserStorage {
         if (Objects.isNull(users.get(user.getId()))) {
             throw new NotFoundException("Film Not Found");
         }
-        return users.put(user.getId(), user);
+        users.put(user.getId(), user);
+        return user;
     }
 
     @Override
@@ -48,6 +50,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User findById(Integer id) {
+        if (Objects.isNull(users.get(id))) {
+            throw new NotFoundException("User Not Found");
+        }
         return users.get(id);
     }
 

@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PastOrPresent;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -33,6 +34,6 @@ public class User {
         this.login = login;
         this.name = name == null || name.isBlank() ? login : name;
         this.birthday = birthday;
-        this.friends = friends;
+        this.friends = friends == null ? new HashSet<>() : friends;
     }
 }

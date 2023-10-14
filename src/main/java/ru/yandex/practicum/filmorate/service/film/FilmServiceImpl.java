@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -15,17 +17,19 @@ import java.util.stream.Collectors;
 @Service
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
     @Autowired
-    public FilmServiceImpl(FilmStorage filmStorage) {
+    public FilmServiceImpl(FilmStorage filmStorage, UserStorage userStorage) {
         this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
     }
 
     @Override
     public Film addLike(Integer filmId, Integer userId) {
         Film film = filmStorage.findById(filmId);
-        Set<Integer> updatedLikeSet = film.getLikes();
-        updatedLikeSet.add(userId);
+        Set<Integer> updatedLikeSet = new HashSet<>(film.getLikes());
+        updatedLikeSet.add(userStorage.findById(userId).getId());
 
         Film updatedFilm = film.toBuilder()
                 .likes(updatedLikeSet)
@@ -36,8 +40,8 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public Film deleteLike(Integer filmId, Integer userId) {
         Film film = filmStorage.findById(filmId);
-        Set<Integer> updatedLikeSet = film.getLikes();
-        updatedLikeSet.remove(userId);
+        Set<Integer> updatedLikeSet = new HashSet<>(film.getLikes());
+        updatedLikeSet.remove(userStorage.findById(userId).getId());
 
         Film updatedFilm = film.toBuilder()
                 .likes(updatedLikeSet)
