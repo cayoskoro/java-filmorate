@@ -2,11 +2,15 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.user.UserServiceImpl;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,7 +21,9 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = new UserController();
+        UserStorage userStorage = new InMemoryUserStorage(new HashMap<>());
+        UserServiceImpl userService = new UserServiceImpl(userStorage);
+        userController = new UserController(userService);
         user = User.builder()
                 .login("dolore")
                 .name("Nick Name")
@@ -41,8 +47,8 @@ class UserControllerTest {
 
     @Test
     void testCreateWhenRequestBodyIsEmpty() {
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final ValidationException exception = assertThrows(
+                ValidationException.class,
                 () -> userController.create(null)
         );
     }
@@ -126,16 +132,16 @@ class UserControllerTest {
     @Test
     void testUpdateWhenUserWithoutId() {
         userController.create(user);
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> userController.update(user)
         );
     }
 
     @Test
     void testUpdateWhenUserNotFound() {
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> userController.update(updatedUser)
         );
     }
@@ -143,8 +149,8 @@ class UserControllerTest {
     @Test
     void testUpdateWhenRequestBodyIsEmpty() {
         userController.create(user);
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final ValidationException exception = assertThrows(
+                ValidationException.class,
                 () -> userController.update(null)
         );
     }

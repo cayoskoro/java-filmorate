@@ -2,11 +2,17 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.film.FilmServiceImpl;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,7 +27,10 @@ class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController();
+        FilmStorage filmStorage = new InMemoryFilmStorage(new HashMap<>());
+        UserStorage userStorage = new InMemoryUserStorage(new HashMap<>());
+        FilmServiceImpl filmService = new FilmServiceImpl(filmStorage, userStorage);
+        filmController = new FilmController(filmService);
         film = Film.builder()
                 .name("nisi eiusmod")
                 .description("adipisicing")
@@ -45,8 +54,8 @@ class FilmControllerTest {
 
     @Test
     void testCreateWhenRequestBodyIsEmpty() {
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final ValidationException exception = assertThrows(
+                ValidationException.class,
                 () -> filmController.create(null)
         );
     }
@@ -142,16 +151,16 @@ class FilmControllerTest {
     @Test
     void testUpdateWhenFilmWithoutId() {
         filmController.create(film);
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> filmController.update(film)
         );
     }
 
     @Test
     void testUpdateWhenFilmNotFound() {
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> filmController.update(updatedFilm)
         );
     }
@@ -159,8 +168,8 @@ class FilmControllerTest {
     @Test
     void testUpdateWhenRequestBodyIsEmpty() {
         filmController.create(film);
-        final ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        final ValidationException exception = assertThrows(
+                ValidationException.class,
                 () -> filmController.update(null)
         );
     }
