@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -8,14 +9,11 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.*;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users;
     private Integer idCounter = 0;
-
-    @Autowired
-    public InMemoryUserStorage(Map<Integer, User> users) {
-        this.users = users;
-    }
 
     @Override
     public User create(User user) {
@@ -28,8 +26,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        if (Objects.isNull(users.get(user.getId()))) {
-            throw new NotFoundException("Film Not Found");
+        if (users.get(user.getId()) == null) {
+            log.info("{} Not Found", user);
+            throw new NotFoundException("User Not Found");
         }
         users.put(user.getId(), user);
         return user;
@@ -37,7 +36,8 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User delete(User user) {
-        if (Objects.isNull(users.get(user.getId()))) {
+        if (users.get(user.getId()) == null) {
+            log.info("{} Not Found", user);
             throw new NotFoundException("User Not Found");
         }
         return users.remove(user.getId());
@@ -50,10 +50,12 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User findById(Integer id) {
-        if (Objects.isNull(users.get(id))) {
+        User user = users.get(id);
+        if (user == null) {
+            log.info("User by id = {} Not Found", id);
             throw new NotFoundException("User Not Found");
         }
-        return users.get(id);
+        return user;
     }
 
     private Integer generateId() {

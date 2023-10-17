@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -8,14 +9,11 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.util.*;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> films;
     private Integer idCounter = 0;
-
-    @Autowired
-    public InMemoryFilmStorage(Map<Integer, Film> films) {
-        this.films = films;
-    }
 
     @Override
     public Film create(Film film) {
@@ -28,7 +26,8 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film update(Film film) {
-        if (Objects.isNull(films.get(film.getId()))) {
+        if (films.get(film.getId()) == null) {
+            log.info("{} Not Found", film);
             throw new NotFoundException("Film Not Found");
         }
         films.put(film.getId(), film);
@@ -37,7 +36,8 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film delete(Film film) {
-        if (Objects.isNull(films.get(film.getId()))) {
+        if (films.get(film.getId()) == null) {
+            log.info("{} Not Found", film);
             throw new NotFoundException("Film Not Found");
         }
         return films.remove(film.getId());
@@ -50,10 +50,12 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film findById(Integer id) {
-        if (Objects.isNull(films.get(id))) {
+        Film film = films.get(id);
+        if (film == null) {
+            log.info("Film by id = {} Not Found", id);
             throw new NotFoundException("Film Not Found");
         }
-        return films.get(id);
+        return film;
     }
 
     private Integer generateId() {

@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service.film;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -8,22 +9,18 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    @Autowired
-    public FilmServiceImpl(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
 
     @Override
     public Film addLike(Integer filmId, Integer userId) {
@@ -87,24 +84,26 @@ public class FilmServiceImpl implements FilmService {
 
     private void checkValidOrThrow(Film film) {
         if (film == null) {
+            log.info("Film is null");
             throw new ValidationException("Film is null");
         }
 
-        StringBuilder invalidProperties = new StringBuilder();
-        if (Objects.isNull(film.getDuration()) || film.getDuration() <= 0) {
-            invalidProperties.append("duration");
+        List<String> invalidProperties = new ArrayList<>();
+        if (film.getDuration() == null || film.getDuration() <= 0) {
+            invalidProperties.add("duration");
         }
-        if (Objects.isNull(film.getName()) || film.getName().isBlank()) {
-            invalidProperties.append(", name");
+        if (film.getName() == null || film.getName().isBlank()) {
+            invalidProperties.add("name");
         }
         if (film.getDescription().length() > 200) {
-            invalidProperties.append(", description");
+            invalidProperties.add("description");
         }
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            invalidProperties.append(", releaseDate");
+            invalidProperties.add("releaseDate");
         }
 
-        if (invalidProperties.length() != 0) {
+        if (!invalidProperties.isEmpty()) {
+            log.info("Invalid {} property: {}", film, invalidProperties);
             throw new ValidationException("Invalid Film property", invalidProperties.toString());
         }
     }

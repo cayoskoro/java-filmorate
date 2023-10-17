@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -11,13 +12,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserServiceImpl(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
 
     @Override
     public User addFriend(Integer userId, Integer friendId) {
@@ -104,21 +102,23 @@ public class UserServiceImpl implements UserService {
 
     private void checkValidOrThrow(User user) {
         if (user == null) {
+            log.info("User is null");
             throw new ValidationException("User is null");
         }
 
-        StringBuilder invalidProperties = new StringBuilder();
-        if (Objects.isNull(user.getEmail()) || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            invalidProperties.append("email");
+        List<String> invalidProperties = new ArrayList<>();
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            invalidProperties.add("email");
         }
-        if (Objects.isNull(user.getLogin()) || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            invalidProperties.append(", login");
+        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+            invalidProperties.add("login");
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
-            invalidProperties.append(", birthday");
+            invalidProperties.add("birthday");
         }
 
-        if (invalidProperties.length() != 0) {
+        if (!invalidProperties.isEmpty()) {
+            log.info("Invalid {} property: {}", user, invalidProperties);
             throw new ValidationException("Invalid User property", invalidProperties.toString());
         }
     }
