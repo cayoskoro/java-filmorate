@@ -1,70 +1,53 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.film.FilmServiceImpl;
 
 import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/films")
 public class FilmController {
-    private final Map<Integer, Film> films = new HashMap<>();
-    private Integer idCounter = 0;
+    private final FilmServiceImpl filmService;
+
+    @GetMapping
+    public List<Film> findAll() {
+        return filmService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Film findById(@PathVariable Integer id) {
+        return filmService.findById(id);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> findPopularFilms(@RequestParam(name = "count", defaultValue = "10") Integer count) {
+        return filmService.findPopularFilms(count);
+    }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        checkPresentOrThrow(film);
-        if (!isValidFilm(film)) {
-            throw new ValidationException();
-        }
-
-        Film createdFilm = film.toBuilder()
-                .id(generateId())
-                .build();
-        films.put(createdFilm.getId(), createdFilm);
-        return createdFilm;
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        checkPresentOrThrow(film);
-        if (!isValidFilm(film)) {
-            throw new ValidationException();
-        }
-
-        if (Objects.isNull(films.get(film.getId()))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film Not Found");
-        }
-
-        films.put(film.getId(), film);
-        return film;
+        return filmService.update(film);
     }
 
-    @GetMapping
-    public List<Film> findAll() {
-        return new ArrayList<>(films.values());
+    @PutMapping("/{id}/like/{userId}")
+    public Film addLike(@PathVariable(name = "id") Integer filmId,
+                        @PathVariable(name = "userId") Integer userId) {
+        return filmService.addLike(filmId, userId);
     }
 
-    private Integer generateId() {
-        return ++idCounter;
-    }
-
-    private boolean isValidFilm(Film film) {
-        return !Objects.isNull(film.getName()) && !Objects.isNull(film.getDuration())
-                && !film.getName().isBlank()
-                && film.getDescription().length() <= 200
-                && !film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))
-                && film.getDuration() > 0;
-    }
-
-    private void checkPresentOrThrow(Film film) {
-        if (film == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Film is null");
-        }
+    @DeleteMapping("/{id}/like/{userId}")
+    public Film deleteLike(@PathVariable(name = "id") Integer filmId,
+                           @PathVariable(name = "userId") Integer userId) {
+        return filmService.deleteLike(filmId, userId);
     }
 }
