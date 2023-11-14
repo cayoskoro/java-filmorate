@@ -2,13 +2,16 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Data;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Data
+@Repository("filmDbStorage")
 @RequiredArgsConstructor
 @Slf4j
 public class FilmDbStorage implements FilmStorage {
@@ -29,6 +32,8 @@ public class FilmDbStorage implements FilmStorage {
                 .usingGeneratedKeyColumns("id");
 
         ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.registerModule(new JavaTimeModule());
         Map<String, Object> filmToMap = mapper.convertValue(film, new TypeReference<Map<String, Object>>() {});
         Integer createdFilmId = simpleJdbcInsert.executeAndReturnKey(filmToMap).intValue();
         return findById(createdFilmId);
@@ -87,7 +92,7 @@ public class FilmDbStorage implements FilmStorage {
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
                 .duration(rs.getInt("duration"))
-//                .mpa(rs.getInt("mpa_id"))
+                .mpa(Mpa.builder().id(rs.getInt("mpa_id")).build())
                 .build();
     }
 }

@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +17,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-@Repository
+@Repository("userDbStorage")
 @RequiredArgsConstructor
 @Slf4j
 public class UserDbStorage implements UserStorage {
@@ -28,6 +30,8 @@ public class UserDbStorage implements UserStorage {
                 .usingGeneratedKeyColumns("id");
 
         ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.registerModule(new JavaTimeModule());
         Map<String, Object> userToMap = mapper.convertValue(user, new TypeReference<Map<String, Object>>() {});
         Integer createdUserId = simpleJdbcInsert.executeAndReturnKey(userToMap).intValue();
         return findById(createdUserId);
