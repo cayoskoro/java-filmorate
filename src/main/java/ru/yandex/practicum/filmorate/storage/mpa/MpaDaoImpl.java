@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.mpa;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -19,19 +20,19 @@ public class MpaDaoImpl implements MpaDao {
 
     @Override
     public List<Mpa> findAll() {
-        String sql = "SELECT * FROM mpa";
+        String sql = "SELECT * FROM mpa ORDER BY id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> makeMpa(rs));
     }
 
     @Override
     public Mpa findById(Integer id) {
-        String sql = "SELECT * FROM mpa WHERE id = ?";
-        Mpa mpa = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeMpa(rs), id);
-        if (mpa == null) {
+        try {
+            String sql = "SELECT * FROM mpa WHERE id = ?";
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeMpa(rs), id);
+        } catch (EmptyResultDataAccessException e) {
             log.info("Mpa by id = {} Not Found", id);
             throw new NotFoundException("Mpa Not Found");
         }
-        return mpa;
     }
 
     private Mpa makeMpa(ResultSet rs) throws SQLException {

@@ -2,76 +2,46 @@ package ru.yandex.practicum.filmorate.service.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
-    @Qualifier("userDbStorage")
-    private final UserStorage userStorage;
+    private final UserDbStorage userStorage;
 
     @Override
     public User addFriend(Integer userId, Integer friendId) {
-        User friend = userStorage.findById(friendId);
-        Set<Integer> friendFriends = new HashSet<>(friend.getFriends());
-        friendFriends.add(userId);
-        User updatedFriend = friend.toBuilder()
-                .friends(friendFriends)
-                .build();
-        userStorage.update(updatedFriend);
-
-        User user = userStorage.findById(userId);
-        Set<Integer> userFriends = new HashSet<>(user.getFriends());
-        userFriends.add(friendId);
-        User updatedUser = user.toBuilder()
-                .friends(userFriends)
-                .build();
-        userStorage.update(updatedUser);
-        return updatedUser;
+        User user = findById(userId);
+        findById(friendId);
+        userStorage.addFriend(userId, friendId);
+        return user;
     }
 
     @Override
     public User deleteFriend(Integer userId, Integer friendId) {
-        User friend = userStorage.findById(friendId);
-        Set<Integer> friendFriends = new HashSet<>(friend.getFriends());
-        friendFriends.remove(userId);
-        User updatedFriend = friend.toBuilder()
-                .friends(friendFriends)
-                .build();
-        userStorage.update(updatedFriend);
-
-        User user = userStorage.findById(userId);
-        Set<Integer> userFriends = new HashSet<>(user.getFriends());
-        userFriends.remove(friendId);
-        User updatedUser = user.toBuilder()
-                .friends(userFriends)
-                .build();
-        return userStorage.update(updatedUser);
+        User user = findById(userId);
+        findById(friendId);
+        userStorage.deleteFriend(userId, friendId);
+        return user;
     }
 
     @Override
     public List<User> findUserFriends(Integer userId) {
-        return userStorage.findById(userId).getFriends().stream()
-                .map(userStorage::findById)
-                .collect(Collectors.toList());
+        findById(userId);
+        return userStorage.findUserFriends(userId);
     }
 
     @Override
     public List<User> findCommonFriends(Integer userId, Integer otherUserId) {
-        Set<Integer> commonFriendIds = new HashSet<>(userStorage.findById(userId).getFriends());
-        commonFriendIds.retainAll(userStorage.findById(otherUserId).getFriends());
-        return commonFriendIds.stream()
-                .map(userStorage::findById)
-                .collect(Collectors.toList());
+        findById(userId);
+        return userStorage.findCommonFriends(userId, otherUserId);
     }
 
     @Override

@@ -2,12 +2,15 @@ package ru.yandex.practicum.filmorate.service.film;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDao;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaDao;
+import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,53 +23,61 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class FilmServiceImpl implements FilmService {
-    @Qualifier("filmDbStorage")
-    private final FilmStorage filmStorage;
-    @Qualifier("userDbStorage")
-    private final UserStorage userStorage;
+    private final FilmDbStorage filmStorage;
+    private final UserDbStorage userStorage;
+    private final MpaDao mpaDao;
+    private final GenreDao genreDao;
 
     @Override
     public Film addLike(Integer filmId, Integer userId) {
-        Film film = filmStorage.findById(filmId);
-        Set<Integer> updatedLikeSet = new HashSet<>(film.getLikes());
-        updatedLikeSet.add(userStorage.findById(userId).getId());
-
-        Film updatedFilm = film.toBuilder()
-                .likes(updatedLikeSet)
-                .build();
-        return filmStorage.update(updatedFilm);
+        userStorage.findById(filmId);
+        userStorage.findById(userId);
+        filmStorage.addLike(filmId, userId);
+        return findById(filmId);
     }
 
     @Override
     public Film deleteLike(Integer filmId, Integer userId) {
-        Film film = filmStorage.findById(filmId);
-        Set<Integer> updatedLikeSet = new HashSet<>(film.getLikes());
-        updatedLikeSet.remove(userStorage.findById(userId).getId());
-
-        Film updatedFilm = film.toBuilder()
-                .likes(updatedLikeSet)
-                .build();
-        return filmStorage.update(updatedFilm);
+        userStorage.findById(filmId);
+        userStorage.findById(userId);
+        filmStorage.deleteLike(filmId, userId);
+        return findById(filmId);
     }
 
     @Override
     public List<Film> findPopularFilms(Integer count) {
-        return filmStorage.findAll().stream()
-                .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.findPopularFilms(count).stream()
+                .map(it -> it.toBuilder()
+                        .genres(new HashSet<>(genreDao.findFilmGenres(it.getId())))
+                        .mpa(mpaDao.findById(it.getMpa().getId()))
+                        .build()
+                ).collect(Collectors.toList());
     }
 
     @Override
     public Film create(Film film) {
         checkValidOrThrow(film);
-        return filmStorage.create(film);
+        Film newFilm = filmStorage.create(film);
+        Mpa mpa = mpaDao.findById(newFilm.getMpa().getId());
+        genreDao.addFilmGenres(newFilm.getId(), new ArrayList<>(film.getGenres()));
+        Set<Genre> genres = new HashSet<>(genreDao.findFilmGenres(newFilm.getId()));
+        return newFilm.toBuilder()
+                .genres(genres)
+                .mpa(mpa)
+                .build();
     }
 
     @Override
     public Film update(Film film) {
         checkValidOrThrow(film);
-        return filmStorage.update(film);
+        Film updatedFilm = filmStorage.update(film);
+        Mpa mpa = mpaDao.findById(updatedFilm.getMpa().getId());
+        genreDao.addFilmGenres(updatedFilm.getId(), new ArrayList<>(film.getGenres()));
+        Set<Genre> genres = new HashSet<>(genreDao.findFilmGenres(updatedFilm.getId()));
+        return updatedFilm.toBuilder()
+                .genres(genres)
+                .mpa(mpa)
+                .build();
     }
 
     @Override
@@ -77,12 +88,23 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> findAll() {
-        return filmStorage.findAll();
+        return filmStorage.findAll().stream()
+                .map(it -> it.toBuilder()
+                        .genres(new HashSet<>(genreDao.findFilmGenres(it.getId())))
+                        .mpa(mpaDao.findById(it.getMpa().getId()))
+                        .build()
+                ).collect(Collectors.toList());
     }
 
     @Override
     public Film findById(Integer id) {
-        return filmStorage.findById(id);
+        Film film = filmStorage.findById(id);
+        Mpa mpa = mpaDao.findById(film.getMpa().getId());
+        Set<Genre> genres = new HashSet<>(genreDao.findFilmGenres(film.getId()));
+        return film.toBuilder()
+                .genres(genres)
+                .mpa(mpa)
+                .build();
     }
 
     private void checkValidOrThrow(Film film) {

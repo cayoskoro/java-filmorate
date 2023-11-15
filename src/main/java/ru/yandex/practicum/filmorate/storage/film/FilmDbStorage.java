@@ -1,11 +1,8 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
@@ -15,8 +12,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Repository("filmDbStorage")
@@ -30,12 +26,7 @@ public class FilmDbStorage implements FilmStorage {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("films")
                 .usingGeneratedKeyColumns("id");
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mapper.registerModule(new JavaTimeModule());
-        Map<String, Object> filmToMap = mapper.convertValue(film, new TypeReference<Map<String, Object>>() {});
-        Integer createdFilmId = simpleJdbcInsert.executeAndReturnKey(filmToMap).intValue();
+        Integer createdFilmId = simpleJdbcInsert.executeAndReturnKey(filmToMap(film)).intValue();
         return findById(createdFilmId);
     }
 
@@ -54,7 +45,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
-        return film;
+        return findById(film.getId());
     }
 
     @Override
@@ -76,13 +67,33 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film findById(Integer id) {
-        String sql = "SELECT * FROM films WHERE id = ?";
-        Film film = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeFilm(rs), id);
-        if (film == null) {
+        try {
+            String sql = "SELECT * FROM films WHERE id = ?";
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeFilm(rs), id);
+        } catch (EmptyResultDataAccessException e) {
             log.info("Film by id = {} Not Found", id);
             throw new NotFoundException("Film Not Found");
         }
-        return film;
+    }
+
+    public List<Film> findPopularFilms(Integer count) {
+        String sql = "SELECT f.* " +
+                "FROM films f " +
+                "LEFT JOIN likes l ON f.id = l.film_id " +
+                "GROUP BY f.id " +
+                "ORDER BY COUNT(l.user_id) DESC " +
+                "LIMIT ?";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs), count);
+    }
+
+    public void addLike(Integer filmId, Integer userId) {
+        String sql = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
+        jdbcTemplate.update(sql, filmId, userId);
+    }
+
+    public void deleteLike(Integer filmId, Integer userId) {
+        String sql = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+        jdbcTemplate.update(sql, filmId, userId);
     }
 
     private Film makeFilm(ResultSet rs) throws SQLException {
@@ -94,5 +105,15 @@ public class FilmDbStorage implements FilmStorage {
                 .duration(rs.getInt("duration"))
                 .mpa(Mpa.builder().id(rs.getInt("mpa_id")).build())
                 .build();
+    }
+
+    private Map<String, String> filmToMap(Film film) {
+        return new HashMap<>() {{
+            put("name", film.getName());
+            put("description", film.getDescription());
+            put("release_date", String.valueOf(film.getReleaseDate()));
+            put("duration", String.valueOf(film.getDuration()));
+            put("mpa_id", String.valueOf(film.getMpa().getId()));
+        }};
     }
 }

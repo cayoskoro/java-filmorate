@@ -1,11 +1,8 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
@@ -14,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,12 +26,7 @@ public class UserDbStorage implements UserStorage {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("users")
                 .usingGeneratedKeyColumns("id");
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mapper.registerModule(new JavaTimeModule());
-        Map<String, Object> userToMap = mapper.convertValue(user, new TypeReference<Map<String, Object>>() {});
-        Integer createdUserId = simpleJdbcInsert.executeAndReturnKey(userToMap).intValue();
+        Integer createdUserId = simpleJdbcInsert.executeAndReturnKey(userToFilm(user)).intValue();
         return findById(createdUserId);
     }
 
@@ -50,7 +43,7 @@ public class UserDbStorage implements UserStorage {
                 user.getName(),
                 user.getBirthday(),
                 user.getId());
-        return user;
+        return findById(user.getId());
     }
 
     @Override
@@ -72,13 +65,36 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User findById(Integer id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
-        User user = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeUser(rs), id);
-        if (user == null) {
+        try {
+            String sql = "SELECT * FROM users WHERE id = ?";
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeUser(rs), id);
+        } catch (EmptyResultDataAccessException e) {
             log.info("User by id = {} Not Found", id);
             throw new NotFoundException("User Not Found");
         }
-        return user;
+    }
+
+    public void addFriend(Integer userId, Integer friendId) {
+        String sql = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
+        jdbcTemplate.update(sql, userId, friendId);
+    }
+
+    public void deleteFriend(Integer userId, Integer friendId) {
+        String sql = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+        jdbcTemplate.update(sql, userId, friendId);
+    }
+
+    public List<User> findUserFriends(Integer userId) {
+        String sql = "SELECT u.* FROM users u RIGHT JOIN friends f ON u.id = f.friend_id WHERE user_id = ?";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), userId);
+    }
+
+    public List<User> findCommonFriends(Integer userId, Integer otherUserId) {
+        String sql = "SELECT u.* FROM friends f1 " +
+                "INNER JOIN friends f2 ON f1.friend_id = f2.friend_id " +
+                "LEFT JOIN users u ON u.id = f1.friend_id " +
+                "WHERE f1.user_id = ? AND f2.user_id = ?";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), userId, otherUserId);
     }
 
     private User makeUser(ResultSet rs) throws SQLException {
@@ -89,5 +105,14 @@ public class UserDbStorage implements UserStorage {
                 .name(rs.getString("name"))
                 .birthday(rs.getDate("birthday").toLocalDate())
                 .build();
+    }
+
+    private Map<String, String> userToFilm(User user) {
+        return new HashMap<>() {{
+            put("email", user.getEmail());
+            put("login", user.getLogin());
+            put("name", user.getName());
+            put("birthday", String.valueOf(user.getBirthday()));
+        }};
     }
 }
