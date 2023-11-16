@@ -36,17 +36,18 @@ public class GenreDaoImpl implements GenreDao {
     }
 
     @Override
-    public List<Genre> findFilmGenres(int filmId) {
+    public List<Genre> findFilmGenres(Integer filmId) {
         String sql = "SELECT g.id, g.name " +
                 "FROM film_genre fg " +
                 "LEFT JOIN films f ON fg.film_id = f.id " +
                 "RIGHT JOIN genres g ON fg.genre_id = g.id " +
-                "WHERE f.id = ?";
+                "WHERE f.id = ? " +
+                "ORDER BY g.id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> makeGenre(rs), filmId);
     }
 
     @Override
-    public void addFilmGenres(int filmId, List<Genre> genres) {
+    public void addFilmGenres(Integer filmId, List<Genre> genres) {
         deleteFilmGenres(filmId);
         String sql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
         for (Genre genre : genres) {
@@ -56,7 +57,7 @@ public class GenreDaoImpl implements GenreDao {
     }
 
     @Override
-    public void deleteFilmGenres(int filmId) {
+    public void deleteFilmGenres(Integer filmId) {
         String sql = "DELETE FROM film_genre WHERE film_id = ?";
         jdbcTemplate.update(sql, filmId);
     }

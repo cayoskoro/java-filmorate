@@ -9,9 +9,9 @@ public interface GenreDao {
 
     public Genre findById(Integer id);
 
-    public List<Genre> findFilmGenres(int filmId);
+    public List<Genre> findFilmGenres(Integer filmId);
 
-    public void addFilmGenres(int filmId, List<Genre> genres);
+    public void addFilmGenres(Integer filmId, List<Genre> genres);
 
-    public void deleteFilmGenres(int filmId);
+    public void deleteFilmGenres(Integer filmId);
 }
