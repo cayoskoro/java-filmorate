@@ -85,7 +85,8 @@ public class UserDbStorage implements UserStorage {
     }
 
     public List<User> findUserFriends(Integer userId) {
-        String sql = "SELECT u.* FROM users u RIGHT JOIN friends f ON u.id = f.friend_id WHERE user_id = ?";
+        String sql = "SELECT u.* FROM users u RIGHT JOIN friends f ON u.id = f.friend_id " +
+                "WHERE user_id = ? ORDER BY u.id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), userId);
     }
 
@@ -93,7 +94,8 @@ public class UserDbStorage implements UserStorage {
         String sql = "SELECT u.* FROM friends f1 " +
                 "INNER JOIN friends f2 ON f1.friend_id = f2.friend_id " +
                 "LEFT JOIN users u ON u.id = f1.friend_id " +
-                "WHERE f1.user_id = ? AND f2.user_id = ?";
+                "WHERE f1.user_id = ? AND f2.user_id = ? " +
+                "ORDER BY u.id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), userId, otherUserId);
     }
 

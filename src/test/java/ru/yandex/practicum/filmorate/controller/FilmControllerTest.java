@@ -10,21 +10,15 @@ import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.film.FilmServiceImpl;
 import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDao;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDaoImpl;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaDao;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaDaoImpl;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,6 +48,7 @@ class FilmControllerTest {
                 .description("adipisicing")
                 .releaseDate(LocalDate.of(1967, 3, 25))
                 .duration(100)
+                .mpa(mpaDao.findById(1).toBuilder().name(null).build())
                 .build();
         updatedFilm = Film.builder()
                 .id(1)
@@ -61,6 +56,7 @@ class FilmControllerTest {
                 .description("mystery")
                 .releaseDate(LocalDate.of(1990, 4, 8))
                 .duration(100500)
+                .mpa(mpaDao.findById(3).toBuilder().name(null).build())
                 .build();
     }
 
