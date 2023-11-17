@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -48,12 +49,24 @@ public class GenreDaoImpl implements GenreDao {
 
     @Override
     public void addFilmGenres(Integer filmId, List<Genre> genres) {
-        deleteFilmGenres(filmId);
-        String sql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
-        for (Genre genre : genres) {
-            findById(genre.getId());
-            jdbcTemplate.update(sql, filmId, genre.getId());
+        List<Genre> unknownGenres = new ArrayList<>(genres);
+        List<Genre> existingGenres = findAll();
+        unknownGenres.removeAll(findAll());
+        if (!unknownGenres.isEmpty()) {
+            log.debug("Input genres: {}; Existing genres: {}", genres, existingGenres);
+            log.info("Genres {} Not Found", unknownGenres);
+            throw new NotFoundException("Genres Not Found");
         }
+
+        String sql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
+        List<Object[]> batchArgs = new ArrayList<>();
+
+        for (Genre genre : genres) {
+            batchArgs.add(new Object[]{filmId, genre.getId()});
+        }
+
+        deleteFilmGenres(filmId);
+        jdbcTemplate.batchUpdate(sql, batchArgs);
     }
 
     @Override

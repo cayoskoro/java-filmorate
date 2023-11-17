@@ -98,8 +98,8 @@ class UserDbStorageTest {
 
     @Test
     void testUpdateWithNullableUser() {
-        final NullPointerException exception = assertThrows(
-                NullPointerException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> userStorage.update(null)
         );
     }
@@ -139,8 +139,8 @@ class UserDbStorageTest {
 
     @Test
     void testDeleteWithNullableUser() {
-        final NullPointerException exception = assertThrows(
-                NullPointerException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> userStorage.delete(null)
         );
     }

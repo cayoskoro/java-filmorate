@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,10 +31,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        if (findById(user.getId()) == null) {
-            log.info("{} Not Found", user);
-            throw new NotFoundException("User Not Found");
-        }
+        checkExistsOrThrow(user);
         String sql = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
         jdbcTemplate.update(sql,
                 user.getEmail(),
@@ -48,10 +44,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User delete(User user) {
-        if (findById(user.getId()) == null) {
-            log.info("{} Not Found", user);
-            throw new NotFoundException("User Not Found");
-        }
+        checkExistsOrThrow(user);
         String sql = "DELETE FROM users WHERE id = ?";
         jdbcTemplate.update(sql, user.getId());
         return user;
@@ -110,11 +103,18 @@ public class UserDbStorage implements UserStorage {
     }
 
     private Map<String, String> userToFilm(User user) {
-        return new HashMap<>() {{
-            put("email", user.getEmail());
-            put("login", user.getLogin());
-            put("name", user.getName());
-            put("birthday", String.valueOf(user.getBirthday()));
-        }};
+        return Map.of(
+                "email", user.getEmail(),
+                "login", user.getLogin(),
+                "name", user.getName(),
+                "birthday", String.valueOf(user.getBirthday())
+        );
+    }
+
+    private void checkExistsOrThrow(User user) {
+        if (user == null || findById(user.getId()) == null) {
+            log.info("{} Not Found", user);
+            throw new NotFoundException("User Not Found");
+        }
     }
 }

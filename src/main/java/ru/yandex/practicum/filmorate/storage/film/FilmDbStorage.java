@@ -32,10 +32,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film update(Film film) {
-        if (findById(film.getId()) == null) {
-            log.info("{} Not Found", film);
-            throw new NotFoundException("Film Not Found");
-        }
+        checkExistsOrThrow(film);
         String sql = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? "
                 + "WHERE id = ?";
         jdbcTemplate.update(sql,
@@ -50,10 +47,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film delete(Film film) {
-        if (findById(film.getId()) == null) {
-            log.info("{} Not Found", film);
-            throw new NotFoundException("Film Not Found");
-        }
+        checkExistsOrThrow(film);
         String sql = "DELETE FROM films WHERE id = ?";
         jdbcTemplate.update(sql, film.getId());
         return film;
@@ -108,12 +102,19 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Map<String, String> filmToMap(Film film) {
-        return new HashMap<>() {{
-            put("name", film.getName());
-            put("description", film.getDescription());
-            put("release_date", String.valueOf(film.getReleaseDate()));
-            put("duration", String.valueOf(film.getDuration()));
-            put("mpa_id", String.valueOf(film.getMpa().getId()));
-        }};
+        return Map.of(
+                "name", film.getName(),
+                "description", film.getDescription(),
+                "release_date", String.valueOf(film.getReleaseDate()),
+                "duration", String.valueOf(film.getDuration()),
+                "mpa_id", String.valueOf(film.getMpa().getId())
+        );
+    }
+
+    private void checkExistsOrThrow(Film film) {
+        if (film == null || findById(film.getId()) == null) {
+            log.info("{} Not Found", film);
+            throw new NotFoundException("Film Not Found");
+        }
     }
 }

@@ -113,6 +113,17 @@ class GenreDaoImplTest {
     }
 
     @Test
+    void testAddFilmGenresWithUnknownGenre() {
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
+                () -> genreDao.addFilmGenres(2, List.of(
+                        genreDao.findById(2),
+                        Genre.builder().id(9999).build(),
+                        Genre.builder().id(4555).build()))
+        );
+    }
+
+    @Test
     void testDeleteFilmGenres() {
         genreDao.deleteFilmGenres(2);
         assertTrue(genreDao.findFilmGenres(2).isEmpty(), "Список жанров фильма после удаления не пуст");

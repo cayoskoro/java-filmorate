@@ -128,8 +128,8 @@ class FilmDbStorageTest {
 
     @Test
     void testUpdateWithNullableFilm() {
-        final NullPointerException exception = assertThrows(
-                NullPointerException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> filmStorage.update(null)
         );
     }
@@ -169,8 +169,8 @@ class FilmDbStorageTest {
 
     @Test
     void testDeleteWithNullableFilm() {
-        final NullPointerException exception = assertThrows(
-                NullPointerException.class,
+        final NotFoundException exception = assertThrows(
+                NotFoundException.class,
                 () -> filmStorage.delete(null)
         );
     }
