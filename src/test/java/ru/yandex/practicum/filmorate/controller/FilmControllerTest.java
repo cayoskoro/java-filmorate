@@ -1,22 +1,32 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.film.FilmServiceImpl;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDao;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDaoImpl;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaDao;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaDaoImpl;
+import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@JdbcTest
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class FilmControllerTest {
+    private final JdbcTemplate jdbcTemplate;
     private FilmController filmController;
     private Film film;
     private Film updatedFilm;
@@ -27,15 +37,18 @@ class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
-        FilmStorage filmStorage = new InMemoryFilmStorage(new HashMap<>());
-        UserStorage userStorage = new InMemoryUserStorage(new HashMap<>());
-        FilmServiceImpl filmService = new FilmServiceImpl(filmStorage, userStorage);
+        FilmDbStorage filmStorage = new FilmDbStorage(jdbcTemplate);
+        UserDbStorage userStorage = new UserDbStorage(jdbcTemplate);
+        MpaDao mpaDao = new MpaDaoImpl(jdbcTemplate);
+        GenreDao genreDao = new GenreDaoImpl(jdbcTemplate);
+        FilmServiceImpl filmService = new FilmServiceImpl(filmStorage, userStorage, mpaDao, genreDao);
         filmController = new FilmController(filmService);
         film = Film.builder()
                 .name("nisi eiusmod")
                 .description("adipisicing")
                 .releaseDate(LocalDate.of(1967, 3, 25))
                 .duration(100)
+                .mpa(mpaDao.findById(1).toBuilder().name(null).build())
                 .build();
         updatedFilm = Film.builder()
                 .id(1)
@@ -43,6 +56,7 @@ class FilmControllerTest {
                 .description("mystery")
                 .releaseDate(LocalDate.of(1990, 4, 8))
                 .duration(100500)
+                .mpa(mpaDao.findById(3).toBuilder().name(null).build())
                 .build();
     }
 

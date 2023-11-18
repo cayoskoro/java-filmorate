@@ -26,14 +26,18 @@ public class Film {
     @Positive
     private final Integer duration;
     private final Set<Integer> likes;
+    private final Set<Genre> genres;
+    private final Mpa mpa;
 
     public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration,
-                Set<Integer> likes) {
+                Set<Integer> likes, Set<Genre> genres, Mpa mpa) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
         this.likes = likes == null ? new HashSet<>() : likes;
+        this.genres = genres == null ? new HashSet<>() : genres;
+        this.mpa = mpa;
     }
 }
